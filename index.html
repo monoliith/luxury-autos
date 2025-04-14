@@ -12,6 +12,7 @@
       background-color: #000;
       color: #D4AF37;
     }
+
     header {
       background-color: #2E2E2E;
       padding: 2rem;
@@ -20,26 +21,42 @@
       font-weight: 600;
       border-bottom: 4px solid #D4AF37;
     }
+
     main {
       padding: 2rem;
     }
+
+    .table-container {
+      overflow-x: auto;
+    }
+
     table {
       width: 100%;
+      table-layout: fixed;
       border-collapse: collapse;
       background-color: #111;
+      word-wrap: break-word;
     }
+
     th, td {
-      padding: 1rem;
+      padding: 0.75rem;
       text-align: left;
       border-bottom: 1px solid #333;
+      font-size: 0.95rem;
+      word-wrap: break-word;
+      overflow-wrap: break-word;
+      white-space: normal;
     }
+
     th {
       cursor: pointer;
       color: #D4AF37;
     }
+
     tr:hover {
       background-color: #1E1E1E;
     }
+
     .loading {
       text-align: center;
       margin-top: 3rem;
@@ -51,20 +68,22 @@
   <header>Luxury Autos</header>
   <main>
     <div class="loading">Loading cars...</div>
-    <table id="carTable" style="display:none">
-      <thead>
-        <tr>
-          <th onclick="sortTable(0)">Price</th>
-          <th onclick="sortTable(1)">Class</th>
-          <th>Model</th>
-          <th>Category</th>
-          <th onclick="sortTable(4)">Brand</th>
-          <th onclick="sortTable(5)">Seats</th>
-          <th>Stock</th>
-        </tr>
-      </thead>
-      <tbody id="carTableBody"></tbody>
-    </table>
+    <div class="table-container">
+      <table id="carTable" style="display:none">
+        <thead>
+          <tr>
+            <th onclick="sortTable(0)">Price</th>
+            <th onclick="sortTable(1)">Class</th>
+            <th>Model</th>
+            <th>Category</th>
+            <th onclick="sortTable(4)">Brand</th>
+            <th onclick="sortTable(5)">Seats</th>
+            <th>Stock</th>
+          </tr>
+        </thead>
+        <tbody id="carTableBody"></tbody>
+      </table>
+    </div>
   </main>
   <script>
     const sheetURL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vT0QirCZmwYBhvOAXHEMjniGM3BnJujWNrCLB19NumG9ihbG4KkhGQinLuDGdNYkd9dkxEDCehXVNIy/pub?output=csv';
@@ -75,12 +94,12 @@
         const rows = data.split('\n').slice(1);
         const tbody = document.getElementById('carTableBody');
         rows.forEach(row => {
-          const cols = row.split(',');
-          if (cols.length >= 7) {
+          const cols = row.match(/(".*?"|[^",\s]+)(?=\s*,|\s*$)/g);
+          if (cols && cols.length >= 7) {
             const tr = document.createElement('tr');
             cols.forEach(col => {
               const td = document.createElement('td');
-              td.textContent = col;
+              td.textContent = col.replace(/(^"|"$)/g, ''); // remove quotes
               tr.appendChild(td);
             });
             tbody.appendChild(tr);
