@@ -9,58 +9,113 @@
     body {
       margin: 0;
       font-family: 'Montserrat', sans-serif;
-      background-color: #000;
+      background: url('https://www.transparenttextures.com/patterns/carbon-fibre.png'), linear-gradient(to bottom right, #000000, #1a1a1a);
+      background-repeat: repeat;
+      background-size: auto, cover;
       color: #D4AF37;
+      overflow-x: hidden;
     }
 
     header {
-      background-color: #2E2E2E;
+      position: sticky;
+      top: 0;
+      z-index: 1000;
+      background: linear-gradient(to right, #111, #2E2E2E);
       padding: 2rem;
       text-align: center;
-      font-size: 2rem;
-      font-weight: 600;
-      border-bottom: 4px solid #D4AF37;
+      font-size: 2.5rem;
+      font-weight: 700;
+      border-bottom: 3px solid #D4AF37;
+      box-shadow: 0 4px 15px rgba(212, 175, 55, 0.3);
+      letter-spacing: 1px;
+      text-shadow: 0 0 10px rgba(212, 175, 55, 0.3);
     }
 
     main {
-      padding: 2rem;
+      padding: 3rem 2rem;
     }
 
     .table-container {
       overflow-x: auto;
+      border-radius: 16px;
+      background: rgba(255, 255, 255, 0.04);
+      backdrop-filter: blur(10px);
+      box-shadow: 0 0 40px rgba(212, 175, 55, 0.15);
+      padding: 1rem;
+      border: 2px solid;
+      border-image: linear-gradient(90deg, #D4AF37, #8B6F28, #D4AF37) 1;
+      animation: borderFlow 5s linear infinite;
+    }
+
+    @keyframes borderFlow {
+      0% {
+        border-image-source: linear-gradient(90deg, #D4AF37, #8B6F28, #D4AF37);
+      }
+      50% {
+        border-image-source: linear-gradient(90deg, #8B6F28, #D4AF37, #8B6F28);
+      }
+      100% {
+        border-image-source: linear-gradient(90deg, #D4AF37, #8B6F28, #D4AF37);
+      }
     }
 
     table {
       width: 100%;
       table-layout: fixed;
       border-collapse: collapse;
-      background-color: #111;
-      word-wrap: break-word;
+      background-color: transparent;
+      color: #fff;
     }
 
     th, td {
-      padding: 0.75rem;
+      padding: 1rem;
       text-align: left;
-      border-bottom: 1px solid #333;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
       font-size: 0.95rem;
       word-wrap: break-word;
       overflow-wrap: break-word;
       white-space: normal;
+      transition: background 0.3s ease;
     }
 
     th {
       cursor: pointer;
-      color: #D4AF37;
+      color: #FFD700;
+      background: linear-gradient(to right, #2c2c2c, #1a1a1a);
+      text-shadow: 0 0 5px rgba(255, 215, 0, 0.4);
+      position: sticky;
+      top: 0;
+      z-index: 10;
+    }
+
+    th.active {
+      background: linear-gradient(to right, #3b3b3b, #1f1f1f);
+      border-bottom: 2px solid #FFD700;
+      color: #FFD700;
+      text-shadow: 0 0 6px rgba(255, 215, 0, 0.5);
+    }
+
+    .arrow {
+      margin-left: 0.4rem;
+      font-size: 0.8rem;
+      opacity: 0.6;
+    }
+
+    tbody tr {
+      opacity: 1;
+      transition: opacity 0.4s ease;
     }
 
     tr:hover {
-      background-color: #1E1E1E;
+      background: rgba(255, 215, 0, 0.08);
     }
 
     .loading {
       text-align: center;
       margin-top: 3rem;
       font-size: 1.5rem;
+      color: #ccc;
+      font-style: italic;
     }
   </style>
 </head>
@@ -72,13 +127,13 @@
       <table id="carTable" style="display:none">
         <thead>
           <tr>
-            <th onclick="sortTable(0)">Price</th>
-            <th onclick="sortTable(1)">Class</th>
-            <th>Model</th>
-            <th>Category</th>
-            <th onclick="sortTable(4)">Brand</th>
-            <th onclick="sortTable(5)">Seats</th>
-            <th>Stock</th>
+            <th onclick="sortTable(0)">Price <span class="arrow"></span></th>
+            <th onclick="sortTable(1)">Class <span class="arrow"></span></th>
+            <th onclick="sortTable(2)">Model <span class="arrow"></span></th>
+            <th onclick="sortTable(3)">Category <span class="arrow"></span></th>
+            <th onclick="sortTable(4)">Brand <span class="arrow"></span></th>
+            <th onclick="sortTable(5)">Seats <span class="arrow"></span></th>
+            <th onclick="sortTable(6)">Stock <span class="arrow"></span></th>
           </tr>
         </thead>
         <tbody id="carTableBody"></tbody>
@@ -99,7 +154,7 @@
             const tr = document.createElement('tr');
             cols.forEach(col => {
               const td = document.createElement('td');
-              td.textContent = col.replace(/(^"|"$)/g, ''); // remove quotes
+              td.textContent = col.replace(/(^"|"$)/g, '');
               tr.appendChild(td);
             });
             tbody.appendChild(tr);
@@ -109,46 +164,42 @@
         document.getElementById('carTable').style.display = 'table';
       });
 
-    function sortTable(n) {
+    function sortTable(colIndex) {
       const table = document.getElementById("carTable");
-      let switching = true;
-      let dir = "asc";
-      let switchcount = 0;
+      const tbody = table.querySelector("tbody");
+      const rows = Array.from(tbody.querySelectorAll("tr"));
+      const headers = table.querySelectorAll("th");
+      const arrows = table.querySelectorAll(".arrow");
 
-      while (switching) {
-        switching = false;
-        const rows = table.rows;
-        for (let i = 1; i < (rows.length - 1); i++) {
-          let shouldSwitch = false;
-          const x = rows[i].getElementsByTagName("TD")[n];
-          const y = rows[i + 1].getElementsByTagName("TD")[n];
+      let isAsc = table.getAttribute("data-sort-dir") !== "asc";
+      table.setAttribute("data-sort-dir", isAsc ? "asc" : "desc");
 
-          const xVal = isNaN(x.innerHTML) ? x.innerHTML.toLowerCase() : parseFloat(x.innerHTML.replace(/[$,]/g, ''));
-          const yVal = isNaN(y.innerHTML) ? y.innerHTML.toLowerCase() : parseFloat(y.innerHTML.replace(/[$,]/g, ''));
+      rows.forEach(row => row.style.opacity = 0);
 
-          if (dir == "asc") {
-            if (xVal > yVal) {
-              shouldSwitch = true;
-              break;
-            }
-          } else if (dir == "desc") {
-            if (xVal < yVal) {
-              shouldSwitch = true;
-              break;
-            }
-          }
-        }
-        if (shouldSwitch) {
-          rows[i].parentNode.insertBefore(rows[i + 1], rows[i]);
-          switching = true;
-          switchcount++;
-        } else {
-          if (switchcount == 0 && dir == "asc") {
-            dir = "desc";
-            switching = true;
-          }
-        }
-      }
+      setTimeout(() => {
+        rows.sort((a, b) => {
+          const aText = a.children[colIndex]?.textContent.trim() || "";
+          const bText = b.children[colIndex]?.textContent.trim() || "";
+
+          const aVal = parseFloat(aText.replace(/[$,]/g, '')) || aText.toLowerCase();
+          const bVal = parseFloat(bText.replace(/[$,]/g, '')) || bText.toLowerCase();
+
+          if (aVal < bVal) return isAsc ? -1 : 1;
+          if (aVal > bVal) return isAsc ? 1 : -1;
+          return 0;
+        });
+
+        headers.forEach(th => th.classList.remove("active"));
+        arrows.forEach(arrow => arrow.textContent = "");
+
+        headers[colIndex].classList.add("active");
+        headers[colIndex].querySelector(".arrow").textContent = isAsc ? "▲" : "▼";
+
+        rows.forEach(row => {
+          tbody.appendChild(row);
+          row.style.opacity = 1;
+        });
+      }, 200);
     }
   </script>
 </body>
