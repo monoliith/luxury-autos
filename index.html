@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Luxury Autos</title>
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600&display=swap" rel="stylesheet">
+  <style>
+    body {
+      margin: 0;
+      font-family: 'Montserrat', sans-serif;
+      background-color: #000;
+      color: #D4AF37;
+    }
+    header {
+      background-color: #2E2E2E;
+      padding: 2rem;
+      text-align: center;
+      font-size: 2rem;
+      font-weight: 600;
+      border-bottom: 4px solid #D4AF37;
+    }
+    main {
+      padding: 2rem;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      background-color: #111;
+    }
+    th, td {
+      padding: 1rem;
+      text-align: left;
+      border-bottom: 1px solid #333;
+    }
+    th {
+      cursor: pointer;
+      color: #D4AF37;
+    }
+    tr:hover {
+      background-color: #1E1E1E;
+    }
+    .loading {
+      text-align: center;
+      margin-top: 3rem;
+      font-size: 1.5rem;
+    }
+  </style>
+</head>
+<body>
+  <header>Luxury Autos</header>
+  <main>
+    <div class="loading">Loading cars...</div>
+    <table id="carTable" style="display:none">
+      <thead>
+        <tr>
+          <th onclick="sortTable(0)">Price</th>
+          <th onclick="sortTable(1)">Class</th>
+          <th>Model</th>
+          <th>Category</th>
+          <th onclick="sortTable(4)">Brand</th>
+          <th onclick="sortTable(5)">Seats</th>
+          <th>Stock</th>
+        </tr>
+      </thead>
+      <tbody id="carTableBody"></tbody>
+    </table>
+  </main>
+  <script>
+    const sheetURL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vT0QirCZmwYBhvOAXHEMjniGM3BnJujWNrCLB19NumG9ihbG4KkhGQinLuDGdNYkd9dkxEDCehXVNIy/pub?output=csv';
+
+    fetch(sheetURL)
+      .then(res => res.text())
+      .then(data => {
+        const rows = data.split('\n').slice(1);
+        const tbody = document.getElementById('carTableBody');
+        rows.forEach(row => {
+          const cols = row.split(',');
+          if (cols.length >= 7) {
+            const tr = document.createElement('tr');
+            cols.forEach(col => {
+              const td = document.createElement('td');
+              td.textContent = col;
+              tr.appendChild(td);
+            });
+            tbody.appendChild(tr);
+          }
+        });
+        document.querySelector('.loading').style.display = 'none';
+        document.getElementById('carTable').style.display = 'table';
+      });
+
+    function sortTable(n) {
+      const table = document.getElementById("carTable");
+      let switching = true;
+      let dir = "asc";
+      let switchcount = 0;
+
+      while (switching) {
+        switching = false;
+        const rows = table.rows;
+        for (let i = 1; i < (rows.length - 1); i++) {
+          let shouldSwitch = false;
+          const x = rows[i].getElementsByTagName("TD")[n];
+          const y = rows[i + 1].getElementsByTagName("TD")[n];
+
+          const xVal = isNaN(x.innerHTML) ? x.innerHTML.toLowerCase() : parseFloat(x.innerHTML.replace(/[$,]/g, ''));
+          const yVal = isNaN(y.innerHTML) ? y.innerHTML.toLowerCase() : parseFloat(y.innerHTML.replace(/[$,]/g, ''));
+
+          if (dir == "asc") {
+            if (xVal > yVal) {
+              shouldSwitch = true;
+              break;
+            }
+          } else if (dir == "desc") {
+            if (xVal < yVal) {
+              shouldSwitch = true;
+              break;
+            }
+          }
+        }
+        if (shouldSwitch) {
+          rows[i].parentNode.insertBefore(rows[i + 1], rows[i]);
+          switching = true;
+          switchcount++;
+        } else {
+          if (switchcount == 0 && dir == "asc") {
+            dir = "desc";
+            switching = true;
+          }
+        }
+      }
+    }
+  </script>
+</body>
+</html>
